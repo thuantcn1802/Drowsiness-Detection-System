@@ -2,14 +2,12 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import time
-
+from config import EAR_THRESHOLD, CLOSED_EYES_TIME, CAMERA_INDEX
 mp_face_mesh = mp.solutions.face_mesh
 
 LEFT_EYE = [33, 160, 158, 133, 153, 144]
 RIGHT_EYE = [362, 385, 387, 263, 373, 380]
 
-EAR_THRESHOLD = 0.25
-CLOSED_EYES_TIME = 2  # nhắm mắt quá 2 giây thì cảnh báo
 
 def euclidean_distance(p1, p2):
     return np.linalg.norm(np.array(p1) - np.array(p2))
@@ -24,7 +22,7 @@ def calculate_ear(eye_points):
     ear = (vertical1 + vertical2) / (2.0 * horizontal)
     return ear
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(CAMERA_INDEX)
 
 closed_start_time = None
 is_alerting = False
