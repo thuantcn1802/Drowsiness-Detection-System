@@ -123,19 +123,21 @@ ALARM_SOUND_PATH = "sounds/alarm.mp3"
 ## 4. Project Structure
 
 ```text
+## Project Structure
+
 driver-drowsiness-system/
-├── config.py
-├── gui_camera.py
-├── cnn_predictor.py
-├── model.py
-├── eye.py
-├── yawn.py
-├── head_pose.py
-├── requirements.txt
-├── best_EfficientNetB0_FastKAN.pth
-├── sounds/
-│   └── alarm.mp3
-└── debug_cnn/
+├── src/
+│   ├── app/              # GUI and application entry points
+│   ├── config/           # System configuration
+│   ├── detection/        # EAR, MAR, head pose, CNN predictor
+│   ├── models/           # Deep learning model architecture
+│   └── utils/            # Utility functions
+├── assets/sounds/        # Alarm sound files
+├── weights/              # Trained model weights
+├── debug/                # Debug outputs
+├── tests/                # Test scripts
+├── README.md
+└── requirements.txt
 ```
 
 ### File Description
