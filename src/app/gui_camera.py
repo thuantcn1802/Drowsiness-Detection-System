@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 import time
 import pygame
 import os
+import shutil
 
 from src.config.config import *
 from src.detection.eye import calculate_ear
@@ -18,9 +19,7 @@ except Exception as exc:
     print(f"Khong import duoc CNNPredictor: {exc}")
 
 
-# =========================
 # Fallback config nếu config.py chưa có biến mới
-# =========================
 try:
     AI_YAWNING_CONF_THRESHOLD
 except NameError:
@@ -52,9 +51,7 @@ except NameError:
     CNN_PROB_LINE_GAP = 22
 
 
-# =========================
 # Cấu hình giao diện
-# =========================
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
 
@@ -66,9 +63,7 @@ app.geometry(f"{APP_WIDTH}x{APP_HEIGHT}")
 app.title("AI Driver Dashboard")
 
 
-# =========================
 # Biến toàn cục
-# =========================
 is_running = False
 closed_start_time = None
 trip_start_time = None
@@ -83,9 +78,7 @@ last_status = "NORMAL"
 frame_count = 0
 cnn_result = None
 
-# =========================
 # Âm thanh cảnh báo
-# =========================
 def play_alarm():
     global alarm_playing
 
@@ -102,9 +95,7 @@ def stop_alarm():
         alarm_playing = False
 
 
-# =========================
 # Nút điều khiển camera
-# =========================
 def start_camera():
     global is_running, trip_start_time, closed_start_time
     global frame_count, cnn_result
@@ -130,17 +121,37 @@ def stop_camera():
     stop_alarm()
     status_big.configure(text="STOPPED", text_color="#ff4d4d")
 
+def clear_debug_images():
+    """Xoa anh debug CNN cua phien truoc truoc khi chuong trinh bat dau."""
+    try:
+        if os.path.exists(CNN_DEBUG_DIR):
+            for filename in os.listdir(CNN_DEBUG_DIR):
+                file_path = os.path.join(CNN_DEBUG_DIR, filename)
+
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.remove(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+
+            print(f"Da xoa anh debug cu trong thu muc: {CNN_DEBUG_DIR}")
+        else:
+            os.makedirs(CNN_DEBUG_DIR, exist_ok=True)
+            print(f"Da tao thu muc debug: {CNN_DEBUG_DIR}")
+
+    except Exception as exc:
+        print(f"Khong xoa duoc anh debug cu: {exc}")
+
+clear_debug_images()
 
 def exit_app():
     stop_alarm()
+
     pygame.mixer.quit()
     cap.release()
     face_mesh.close()
     app.destroy()
 
-# =========================
 # Layout
-# =========================
 LEFT_PANEL_WIDTH = 300
 CARD_RADIUS = 14
 
@@ -154,10 +165,7 @@ right.pack(side="right", expand=True, fill="both")
 sidebar = ctk.CTkFrame(left, fg_color="transparent")
 sidebar.pack(fill="both", expand=True, padx=14, pady=12)
 
-
-# =========================
 # Header
-# =========================
 brand_card = ctk.CTkFrame(
     sidebar,
     fg_color="#101a33",
@@ -182,9 +190,7 @@ ctk.CTkLabel(
 ).pack(anchor="w", padx=18, pady=(0, 16))
 
 
-# =========================
 # Stats row
-# =========================
 stats_row = ctk.CTkFrame(sidebar, fg_color="transparent")
 stats_row.pack(fill="x", pady=(0, 8))
 
@@ -238,9 +244,7 @@ count_label = ctk.CTkLabel(
 count_label.pack(anchor="w", padx=14, pady=(0, 12))
 
 
-# =========================
 # Model card
-# =========================
 model_card = ctk.CTkFrame(
     sidebar,
     fg_color="#101a33",
@@ -267,9 +271,7 @@ model_label = ctk.CTkLabel(
 )
 model_label.pack(anchor="w", padx=14, pady=(0, 12))
 
-# =========================
 # AI Analysis card
-# =========================
 ai_card = ctk.CTkFrame(
     sidebar,
     fg_color="#101a33",
@@ -296,9 +298,7 @@ ai_info_label = ctk.CTkLabel(
 )
 ai_info_label.pack(anchor="w", padx=14, pady=(0, 12))
 
-# =========================
 # Rule Metrics card
-# =========================
 rule_card = ctk.CTkFrame(
     sidebar,
     fg_color="#101a33",
@@ -325,9 +325,7 @@ rule_info_label = ctk.CTkLabel(
 )
 rule_info_label.pack(anchor="w", padx=14, pady=(0, 12))
 
-# =========================
 # Buttons
-# =========================
 button_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
 button_frame.pack(fill="x", side="bottom", pady=(4, 0))
 
@@ -368,9 +366,7 @@ ctk.CTkButton(
 ).pack(fill="x", pady=(6, 0))
 
 
-# =========================
 # Nút giao diện
-# =========================
 ctk.CTkButton(
     left,
     text="BẮT ĐẦU",
@@ -405,9 +401,7 @@ ctk.CTkButton(
 ).pack(pady=10)
 
 
-# =========================
 # Khu vực bên phải
-# =========================
 top_frame = ctk.CTkFrame(right, fg_color="transparent")
 top_frame.pack(fill="x", padx=30, pady=(30, 10))
 
@@ -441,9 +435,7 @@ info_label = ctk.CTkLabel(
 info_label.pack(pady=(0, 20))
 
 
-# =========================
 # MediaPipe + Camera
-# =========================
 mp_face_mesh = mp.solutions.face_mesh
 
 face_mesh = mp_face_mesh.FaceMesh(
@@ -465,19 +457,14 @@ elif ENABLE_ALARM_SOUND:
     print(f"Khong tim thay file am thanh: {ALARM_SOUND_PATH}")
 
 
-# =========================
 # Detector gục đầu
-# =========================
 head_detector = HeadDownDetector(
     calibration_frames=HEAD_CALIBRATION_FRAMES,
     score_delta=HEAD_DOWN_SCORE_DELTA,
     down_time=HEAD_DOWN_TIME,
 )
 
-
-# =========================
 # Load CNN model
-# =========================
 cnn_predictor = None
 
 if ENABLE_CNN_MODEL and CNNPredictor is not None:
@@ -493,9 +480,7 @@ else:
     model_label.configure(text="Model: OFF", text_color="#f97316")
 
 
-# =========================
 # Hàm phụ
-# =========================
 def get_cnn_text(result):
     if cnn_predictor is None:
         return "CNN: OFF"
@@ -700,9 +685,7 @@ def update_rule_info(ear, mar, head_delta, status):
         text_color=color,
     )
 
-# =========================
 # Update camera frame
-# =========================
 def update_frame():
     global closed_start_time, frame_count, cnn_result
 
@@ -762,9 +745,7 @@ def update_frame():
         ear = (calculate_ear(left_eye) + calculate_ear(right_eye)) / 2
         mar = calculate_mar(mouth)
 
-        # ==================================================
         # 1. AI MODEL DỰ ĐOÁN TRƯỚC
-        # ==================================================
         ai_label = None
         ai_conf = 0.0
 
@@ -783,9 +764,7 @@ def update_frame():
                 ai_label = None
                 ai_conf = 0.0
 
-        # ==================================================
         # 2. TÍNH RULE-BASED ĐỂ DỰ PHÒNG
-        # ==================================================
         eye_alert = False
 
         if ear < EAR_THRESHOLD:
@@ -801,9 +780,7 @@ def update_frame():
 
         is_head_alert, head_score, head_delta, is_calibrated = head_detector.update(face)
 
-        # ==================================================
         # 3. QUYẾT ĐỊNH TRẠNG THÁI
-        # ==================================================
         if (
             ai_label in ["sleepyCombination", "slowBlinkWithNodding"]
             and ai_conf >= CNN_CONFIDENCE_THRESHOLD
@@ -837,53 +814,52 @@ def update_frame():
         closed_start_time = None
         head_detector.reset_timer()
 
-    # =========================
     # Hiển thị debug CNN trên camera
-    # =========================
-    cv2.putText(
-        frame,
-        get_cnn_text(cnn_result),
-        (CNN_TEXT_X, CNN_TEXT_Y),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        CNN_TEXT_SCALE,
-        (0, 255, 255),
-        CNN_TEXT_THICKNESS,
-    )
-
-    if cnn_result is not None:
-        y0 = CNN_PROB_START_Y
-
-        for idx, (name, prob) in enumerate(zip(CNN_CLASS_NAMES, cnn_result["probs"])):
-            cv2.putText(
-                frame,
-                f"{name}: {prob:.2f}",
-                (CNN_TEXT_X, y0 + idx * CNN_PROB_LINE_GAP),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                CNN_PROB_TEXT_SCALE,
-                (255, 255, 0),
-                CNN_PROB_TEXT_THICKNESS,
-            )
-
+    if SHOW_CAMERA_DEBUG_TEXT:
         cv2.putText(
             frame,
-            f"MAR: {mar:.2f} | AI_YAWN_MAR: {AI_YAWNING_MAR_THRESHOLD:.2f}",
-            (CNN_TEXT_X, y0 + len(CNN_CLASS_NAMES) * CNN_PROB_LINE_GAP + 8),
+            get_cnn_text(cnn_result),
+            (CNN_TEXT_X, CNN_TEXT_Y),
             cv2.FONT_HERSHEY_SIMPLEX,
-            CNN_PROB_TEXT_SCALE,
+            CNN_TEXT_SCALE,
             (0, 255, 255),
-            CNN_PROB_TEXT_THICKNESS,
+            CNN_TEXT_THICKNESS,
         )
 
-        if cnn_result["label"] == "yawning" and mar < AI_YAWNING_MAR_THRESHOLD:
+        if cnn_result is not None:
+            y0 = CNN_PROB_START_Y
+
+            for idx, (name, prob) in enumerate(zip(CNN_CLASS_NAMES, cnn_result["probs"])):
+                cv2.putText(
+                    frame,
+                    f"{name}: {prob:.2f}",
+                    (CNN_TEXT_X, y0 + idx * CNN_PROB_LINE_GAP),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    CNN_PROB_TEXT_SCALE,
+                    (255, 255, 0),
+                    CNN_PROB_TEXT_THICKNESS,
+                )
+
             cv2.putText(
                 frame,
-                "AI yawning blocked: mouth not open enough",
-                (CNN_TEXT_X, y0 + len(CNN_CLASS_NAMES) * CNN_PROB_LINE_GAP + 32),
+                f"MAR: {mar:.2f} | AI_YAWN_MAR: {AI_YAWNING_MAR_THRESHOLD:.2f}",
+                (CNN_TEXT_X, y0 + len(CNN_CLASS_NAMES) * CNN_PROB_LINE_GAP + 8),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 CNN_PROB_TEXT_SCALE,
-                (0, 0, 255),
+                (0, 255, 255),
                 CNN_PROB_TEXT_THICKNESS,
             )
+
+            if cnn_result["label"] == "yawning" and mar < AI_YAWNING_MAR_THRESHOLD:
+                cv2.putText(
+                    frame,
+                    "AI yawning blocked: mouth not open enough",
+                    (CNN_TEXT_X, y0 + len(CNN_CLASS_NAMES) * CNN_PROB_LINE_GAP + 32),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    CNN_PROB_TEXT_SCALE,
+                    (0, 0, 255),
+                    CNN_PROB_TEXT_THICKNESS,
+                )
 
 
     update_ai_info(cnn_result)
