@@ -11,6 +11,18 @@ The system combines:
 - Rule-based analysis using EAR (Eye Aspect Ratio), MAR (Mouth Aspect Ratio), and head pose estimation
 - Real-time warning dashboard with audio alerts
 
+> **Important**
+>
+> The pretrained model is not included in this repository due to GitHub file size limitations.
+>
+> Download:
+>
+> https://drive.google.com/file/d/1Jo0hj1ZQt9GZ7aDssd63ownw-j7147kq/view?usp=drive_link
+>
+> Place the file in:
+>
+> weights/best_EfficientNetB0_FastKAN.pth
+
 ## Features
 
 - Real-time webcam monitoring
@@ -27,7 +39,7 @@ The system combines:
 ## Project Structure
 
 ```text
-driver-drowsiness-system/
+Drowsiness-Detection-System/
 │
 ├── src/
 │   ├── app/
@@ -70,30 +82,36 @@ driver-drowsiness-system/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/thuantcn1802/driver-drowsiness-system.git
-cd driver-drowsiness-system
+git clone https://github.com/thuantcn1802/Drowsiness-Detection-System.git
+cd Drowsiness-Detection-System
 ```
 
 ### 2. Create a virtual environment
-Option 1: Conda Environment (Recommended)
 
-Create a new Conda environment:
+#### Option 1: Conda (Recommended)
+
+```bash
 conda create -n drowsiness python=3.10 -y
-
-Activate the environment:
 conda activate drowsiness
+```
 
-Option 2: Python Virtual Environment (venv)
+#### Option 2: venv
 
-Create a virtual environment:
+```bash
 python -m venv venv
+```
 
-Activate the environment:
-Windows
+Windows:
+
+```bash
 venv\Scripts\activate
+```
 
-Linux / macOS
+Linux/macOS:
+
+```bash
 source venv/bin/activate
+```
 
 ### 3. Install dependencies
 
@@ -101,35 +119,59 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Download the trained model (Required)
+### 4. Obtain the Trained Model
 
-The model file is not included in this repository because of its size.
+The application requires the following model file:
 
-After cloning the project, download:
+```text
+best_EfficientNetB0_FastKAN.pth
+```
 
-**best_EfficientNetB0_FastKAN.pth**
+There are two ways to obtain it:
 
-Google Drive:
+#### Option 1: Download the Pretrained Model (Recommended)
 
-https://drive.google.com/file/d/1Jo0hj1ZQt9GZ7aDssd63ownw-j7147kq/view?usp=drive_link
+Download the pretrained model from Google Drive:
 
-Create the `weights` folder if it does not exist:
+<https://drive.google.com/file/d/1Jo0hj1ZQt9GZ7aDssd63ownw-j7147kq/view?usp=drive_link>
+
+Create the `weights` directory if it does not exist:
 
 ```bash
 mkdir weights
 ```
 
-Place the downloaded file here:
+Place the downloaded file in:
 
 ```text
-driver-drowsiness-system/
+Drowsiness-Detection-System/
 └── weights/
     └── best_EfficientNetB0_FastKAN.pth
 ```
 
-Without this file, the AI model cannot be loaded and the application will not start correctly.
+#### Option 2: Train the Model Yourself
 
----
+The project includes training scripts inside the `train/` directory.
+
+Prepare the dataset and run the training pipeline:
+
+```bash
+python train/train.py
+```
+
+After training is completed, copy the generated model file to:
+
+```text
+Drowsiness-Detection-System/
+└── weights/
+    └── best_EfficientNetB0_FastKAN.pth
+```
+
+> **Note**
+>
+> Training the model requires the corresponding dataset and may take a significant amount of time depending on your hardware configuration.
+
+Without a valid model file in the `weights` directory, the application cannot perform drowsiness detection.
 
 ## Running the Application
 
