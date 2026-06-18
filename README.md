@@ -70,7 +70,7 @@ driver-drowsiness-system/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/driver-drowsiness-system.git
+git clone https://github.com/thuantcn1802/driver-drowsiness-system.git
 cd driver-drowsiness-system
 ```
 
